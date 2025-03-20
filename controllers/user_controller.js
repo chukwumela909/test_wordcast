@@ -13,7 +13,7 @@ const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: 'Email is already in use' });
         }
-        const user = new User({ userId, username, password: hashedPassword, email, wallet: 0 });
+        const user = new User({ userId, username, password: password, email, wallet: 0 });
         await user.save();
 
 
