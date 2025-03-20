@@ -33,6 +33,7 @@ const login = async (req, res) => {
 
         const isValid = await password == user.password;
         console.log(isValid);
+        console.log(password, user.password);
         if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
 
         const token =  user.userId;
