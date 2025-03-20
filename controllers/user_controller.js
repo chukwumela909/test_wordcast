@@ -16,7 +16,7 @@ const register = async (req, res) => {
         const user = new User({ userId, username, password: hashedPassword, email, wallet: 0 });
         await user.save();
 
-      
+
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
@@ -34,7 +34,7 @@ const login = async (req, res) => {
         if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
 
         const token = generateToken(user._id);
-        res.json({ token });
+        res.status(200).res.json({ token });
     } catch (error) {
         res.status(500).json({ message: 'Error logging in', error });
     }
