@@ -1,28 +1,98 @@
-# Dependency directories
+# Node.js
 node_modules/
+npm-debug.log
+yarn-error.log
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
-.env
-
-# Build output
-dist/
-build/
-
-# Cache
-.cache/
-*.cache
-
-# IDE specific files
+# Editor files
 .vscode/
 .idea/
+.DS_Store
 
-# System files
+# Testing
+coverage/
+.nyc_output/
+
+# Build
+build/
+dist/
+lib/
+
+# Temporary files
+*.log
+*.tmp
+*.pid
+*.lock
+
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# Editor files
+*.sublime-project
+*.sublime-workspace
+
+# IDE files
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Local configuration files
+.env
+.env.*
+
+# macOS
+.DS_Store
+.localized/
+
+# Windows
+*.suo
+*.user
+*.sln
+*.vspscc
+.vssscc
+
+# Package managers
+package-lock.json
+yarn.lock
+
+# Docker
+Dockerfile*
+docker-compose.yml
+docker-compose.*.yml
+
+# Miscellaneous
+*.md
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.txt
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.rar
+*.tar.gz
+*.gz
+*.bz2
+*.7z
+
+# Specific file names
+README.md
+LICENSE
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Generated files
+*.min.js
+*.min.css
+*.map
