@@ -1,5 +1,5 @@
-const { v4: uuidv4 } = require('uuid');
 const Livestream = require('../models/livestream');
+const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const crypto = require('crypto');
 
@@ -40,10 +40,12 @@ const createLivestream = async (req, res) => {
         const response = await axios.get('https://rtc-api.zego.im/', { params });
         console.log('RTMP Dispatch Response:', response.data);
 
+        const livedata = response.data
+
         const livestream = new Livestream({ liveId, hostId, viewCount: 0, isActive: true });
         await livestream.save();
 
-        res.status(201).json({ message: 'Livestream created', liveId });
+     return   res.status(200).json({ message: 'Livestream created', livedata });
     } catch (error) {
         res.status(500).json({ message: 'Error creating livestream', error });
     }
