@@ -1,5 +1,4 @@
 const User = require('../models/user')
-const Wallet = require('../models/wallet')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -14,12 +13,10 @@ const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: 'Email is already in use' });
         }
-        const user = new User({ userId, username, password: hashedPassword, email });
+        const user = new User({ userId, username, password: hashedPassword, email, wallet: 0 });
         await user.save();
 
-        const walletId = uuidv4();
-        const wallet = new Wallet({ walletId, userId, balance: 0 });
-        await wallet.save();
+      
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
