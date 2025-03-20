@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
+
 const register = async (req, res) => {
     const { username, password, email } = req.body;
     try {
@@ -31,19 +32,22 @@ const login = async (req, res) => {
         if (!user) return res.status(400).json({ message: 'User not found' });
 
         const isValid = await password == user.password;
+        console.log(isValid);
         if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const token = generateToken(user._id);
-        res.status(200).res.json({ token });
+        const token =  user.userId;
+        console.log(token);
+
+        return res.status(200).json({ token });
     } catch (error) {
-        res.status(500).json({ message: 'Error logging in', error });
+        res.status(500).json({ message: 'Error logging in',  });
     }
 };
 
 const getUser = async (req, res) => {
     const { id } = req.params;
     try {
-        const user = await User.findOne({ userId: id }, '-password');
+        const user = await User.findOne({ userId: id });
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json(user);
     } catch (error) {
