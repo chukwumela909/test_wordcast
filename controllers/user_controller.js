@@ -9,6 +9,11 @@ const register = async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         const userId = uuidv4();
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email is already in use' });
+        }
         const user = new User({ userId, username, password: hashedPassword, email });
         await user.save();
 
