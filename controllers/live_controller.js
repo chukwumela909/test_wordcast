@@ -6,7 +6,8 @@ const crypto = require('crypto');
 const createLivestream = async (req, res) => {
     try {
         const liveId = uuidv4();
-        const hostId = req.userId; // From auth middleware
+        const { userId } = req.body;
+        const hostId = userId; // From auth middleware
 
         const timeStamp = Math.round(Date.now() / 1000);
         const timeStampInMilliseconds = Date.now();

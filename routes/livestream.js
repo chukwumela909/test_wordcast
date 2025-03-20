@@ -4,7 +4,7 @@ const { protect } = require('../middlewares/authmiddleware');
 
 const router = express.Router();
 
-router.post('/', protect, createLivestream);
+router.post('/', createLivestream);
 router.get('/:liveId', getLivestream);
 router.put('/:liveId', protect, updateLivestream);
 
