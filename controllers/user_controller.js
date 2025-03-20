@@ -31,10 +31,10 @@ const login = async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(400).json({ message: 'User not found' });
 
         const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return res.status(401).json({ message: 'Invalid credentials' });
+        if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
 
         const token = generateToken(user._id);
         res.json({ token });
