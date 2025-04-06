@@ -1,11 +1,10 @@
 const User = require('../models/user')
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 
 const register = async (req, res) => {
-    const { username, password, email } = req.body;
+    const { channel_name, password, email } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         const userId = uuidv4();
@@ -14,7 +13,13 @@ const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: 'Email is already in use' });
         }
-        const user = new User({ userId, username, password: password, email, wallet: 0 });
+
+        const existingChannelName = await User.findOne({ channelName: channel_name });
+        if (existingChannelName) {
+            return res.status(400).json({ message: 'Channel name is already in use' });
+        }
+
+        const user = new User({ userId, channelName : channel_name, password: hashedPassword, email, wallet: 0 });
         await user.save();
 
 
@@ -31,25 +36,24 @@ const login = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ message: 'User not found' });
 
-        const isValid = await password == user.password;
-        console.log(isValid);
-        console.log(password, user.password);
+        // Use bcrypt.compare to safely check the password
+        const isValid = await bcrypt.compare(password, user.password);
+        
         if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const token =  user.userId;
-        console.log(token);
+        const token = user.userId;
 
         return res.status(200).json({ token });
     } catch (error) {
-        res.status(500).json({ message: 'Error logging in',  });
+        res.status(500).json({ message: 'Error logging in', error });
     }
 };
 
 const getUser = async (req, res) => {
-    const { id } = req.params;
+    const { token } = req.body;
     try {
-        const user = await User.findOne({ userId: id });
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        const user = await User.findOne({ userId: token });
+        if (!user) return res.status(400).json({ message: 'User not found' });
         res.json(user);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching user', error });

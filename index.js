@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const userRoutes = require('./routes/user');
+const authRoutes = require('./routes/auth');
 const livestreamRoutes = require('./routes/livestream');
 
 
@@ -14,11 +14,9 @@ mongoose.connect('mongodb+srv://amirizew:0HTwexCkSckakIPL@cluster0.atoor.mongodb
     .catch((err) => console.error('Could not connect to MongoDB', err));
 
 app.use(express.json());
-app.use('/api/users', userRoutes);
-app.use('/api/livestreams', livestreamRoutes);
-app.get('/api/test', (req, res) => {
-        res.send('Test endpoint is working!');
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/livestream', livestreamRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 
