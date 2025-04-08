@@ -19,9 +19,18 @@ const storage = multer.diskStorage({
 
 // File filter (optional: accept only images)
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    console.log("Multer received file:", { // Log the received file info
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        mimetype: file.mimetype, // THIS IS THE KEY VALUE TO CHECK
+        size: file.size
+    });
+
+    // Add a check to see if mimetype exists at all
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
         cb(null, true); // Accept file
     } else {
+        console.error(`File rejected. Expected mimetype starting with 'image/', but received '${file.mimetype}'.`);
         cb(new Error('Only image files are allowed!'), false); // Reject file
     }
 };
