@@ -50,7 +50,7 @@ const createLivestream = async (req, res) => {
         const hostChannel = user.channelName
         const channelImage = user.channelImage
 
-        const livestream = new Livestream({ liveId, hostId, hostChannel, channelImage, viewCount: 0, isActive: true });
+        const livestream = new Livestream({ liveId, hostId, hostChannel: hostChannel, channelImage: channelImage, viewCount: 0, isActive: true });
         await livestream.save();
 
      return   res.status(200).json({ message: 'Livestream created', livedata });
