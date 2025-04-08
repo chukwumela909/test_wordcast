@@ -2,6 +2,7 @@ const Livestream = require('../models/livestream');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const crypto = require('crypto');
+const User = require('../models/user');
 
 const createLivestream = async (req, res) => {
     try {
@@ -42,7 +43,14 @@ const createLivestream = async (req, res) => {
 
         const livedata = response.data
 
-        const livestream = new Livestream({ liveId, hostId, viewCount: 0, isActive: true });
+
+        // Create Livestream
+        const user = await User.find({userId: hostId})
+
+        const hostChannel = user.channelName
+        const channelImage = user.channelImage
+
+        const livestream = new Livestream({ liveId, hostId, hostChannel, channelImage, viewCount: 0, isActive: true });
         await livestream.save();
 
      return   res.status(200).json({ message: 'Livestream created', livedata });
