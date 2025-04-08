@@ -51,6 +51,15 @@ const createLivestream = async (req, res) => {
     }
 };
 
+const fetchLivestreams = async (req, res) => {
+    try {
+        const livestreams = await Livestream.find({isActive: true});
+        res.json(livestreams);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching livestreams', error });
+    }
+}
+
 const getLivestream = async (req, res) => {
     const { liveId } = req.params;
     try {
@@ -81,6 +90,7 @@ const updateLivestream = async (req, res) => {
 
 module.exports = {
     createLivestream,
+    fetchLivestreams,
     getLivestream,
     updateLivestream,
 };
