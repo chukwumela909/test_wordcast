@@ -45,10 +45,12 @@ const createLivestream = async (req, res) => {
 
 
         // Create Livestream
-        const user = await User.find({userId: hostId})
+        const user = await User.findOne({userId: userId})
 
         const hostChannel = user.channelName
         const channelImage = user.channelImage
+
+        console.log(hostChannel, channelImage)
 
         const livestream = new Livestream({ liveId, hostId, hostChannel: hostChannel, channelImage: channelImage, viewCount: 0, isActive: true });
         await livestream.save();
