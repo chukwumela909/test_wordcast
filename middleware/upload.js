@@ -1,21 +1,25 @@
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const fs = require('fs');
 
-// Define the storage location and filename strategy
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '..', 'uploads', 'channel_images'); // Store in project_root/uploads/channel_images
-        // Create the directory if it doesn't exist
-        fs.mkdirSync(uploadPath, { recursive: true });
-        cb(null, uploadPath); // Specify the directory to save files
-    },
-    filename: function (req, file, cb) {
-        // Create a unique filename: fieldname-timestamp.extension
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: "daf6mdwkh",
+    api_key: '336955753785989',
+    api_secret: 'Vfdz57A-u5IfWQN_iLdGuriWHu4'
+  });
+
+// Set up Multer storage engine for Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'my-uploads', // optional folder in your Cloudinary account
+      allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'], // allowed file formats
+      transformation: [{ width: 500, height: 500, crop: 'limit' }] // optional transformations
     }
-});
+  });
 
 // File filter (optional: accept only images)
 const fileFilter = (req, file, cb) => {
