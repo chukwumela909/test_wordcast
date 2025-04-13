@@ -28,7 +28,7 @@ const uploadChannelImage = async (req, res) => {
         // This path should be relative to how you serve static files,
         // or a full URL if stored elsewhere (like a CDN).
         // Assuming you serve 'uploads' directory statically at '/uploads' route:
-        const relativeFilePath = `/uploads/channel_images/${req.file.filename}`;
+        const relativeFilePath = `/uploads/channel_images/${req.file.path}`;
 
         // 5. Update the user's channelImage field
         user.channelImage = relativeFilePath;
