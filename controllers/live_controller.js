@@ -6,60 +6,60 @@ const User = require('../models/user');
 
 const createLivestream = async (req, res) => {
     console.log("habibah")
-    // try {
-    //     const liveId = uuidv4();
-    //     const { userId } = req.body;
-    //     const hostId = userId; // From auth middleware
+    try {
+        const liveId = uuidv4();
+        const { userId } = req.body;
+        const hostId = userId; // From auth middleware
 
-    //     const timeStamp = Math.round(Date.now() / 1000);
-    //     const timeStampInMilliseconds = Date.now();
-    //     const appId = 2105476770;
-    //     const serverSecret = '2001088df8b08f44e880580270eed03e';
-    //     const signatureNonce = crypto.randomBytes(8).toString('hex');
+        const timeStamp = Math.round(Date.now() / 1000);
+        const timeStampInMilliseconds = Date.now();
+        const appId = 2105476770;
+        const serverSecret = '2001088df8b08f44e880580270eed03e';
+        const signatureNonce = crypto.randomBytes(8).toString('hex');
 
-    //     function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
-    //         const hash = crypto.createHash('md5'); // Use the MD5 hashing algorithm.
-    //         const str = appId + signatureNonce + serverSecret + timeStamp;
-    //         hash.update(str);
-    //         // hash.digest('hex') indicates that the output is in hex format 
-    //         return hash.digest('hex');
-    //     }
+        function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
+            const hash = crypto.createHash('md5'); // Use the MD5 hashing algorithm.
+            const str = appId + signatureNonce + serverSecret + timeStamp;
+            hash.update(str);
+            // hash.digest('hex') indicates that the output is in hex format 
+            return hash.digest('hex');
+        }
 
-    //     const signature = GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp);
+        const signature = GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp);
 
-    //     const params = {
-    //         Action: 'RTMPDispatchV2',
-    //         StreamId: 'rtc01',
-    //         Sequence: timeStampInMilliseconds.toString(),
-    //         Type: 'pull',
-    //         AppId: '486156498',
-    //         SignatureNonce: signatureNonce,
-    //         Signature: signature,
-    //         SignatureVersion: '2.0',
-    //         Timestamp: timeStamp.toString()
-    //     };
+        const params = {
+            Action: 'RTMPDispatchV2',
+            StreamId: 'rtc01',
+            Sequence: timeStampInMilliseconds.toString(),
+            Type: 'pull',
+            AppId: '486156498',
+            SignatureNonce: signatureNonce,
+            Signature: signature,
+            SignatureVersion: '2.0',
+            Timestamp: timeStamp.toString()
+        };
 
-    //     const response = await axios.get('https://rtc-api.zego.im/', { params });
-    //     console.log('RTMP Dispatch Response:', response.data);
+        const response = await axios.get('https://rtc-api.zego.im/', { params });
+        console.log('RTMP Dispatch Response:', response.data);
 
-    //     const livedata = response.data
+        const livedata = response.data
 
 
-    //     // // Create Livestream
-    //     const user = await User.findOne({userId: userId})
+        // // Create Livestream
+        const user = await User.findOne({userId: userId})
 
-    //     const hostChannel = user.channelName
-    //     const channelImage = user.channelImage
+        const hostChannel = user.channelName
+        const channelImage = user.channelImage
 
-    //     console.log(hostChannel, channelImage)
+        console.log(hostChannel, channelImage)
 
-    //     const livestream = new Livestream({ liveId, hostId, hostChannel: hostChannel, channelImage: channelImage, viewCount: 0, isActive: true });
-    //     await livestream.save();
+        const livestream = new Livestream({ liveId, hostId, hostChannel: hostChannel, channelImage: channelImage, viewCount: 0, isActive: true });
+        await livestream.save();
 
-    //  return   res.status(200).json({ message: 'Livestream created', livedata });
-    // } catch (error) {
-    //     res.status(500).json({ message: 'Error creating livestream', error });
-    // }
+     return   res.status(200).json({ message: 'Livestream created', livedata });
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating livestream', error });
+    }
 };
 
 const fetchLivestreams = async (req, res) => {
