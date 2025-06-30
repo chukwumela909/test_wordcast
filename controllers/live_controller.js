@@ -9,6 +9,11 @@ const createLivestream = async (req, res) => {
     try {
         const liveId = uuidv4();
         const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({ message: 'userId is required' });
+        }
+        
         const hostId = userId; // From auth middleware
 
         const timeStamp = Math.round(Date.now() / 1000);
@@ -45,11 +50,15 @@ const createLivestream = async (req, res) => {
         const livedata = response.data
 
 
-        // // Create Livestream
+       // Create Livestream
         const user = await User.findOne({userId: userId})
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
         const hostChannel = user.channelName
-        const channelImage = user.channelImage
+        const channelImage = user.channelImage || '' // Provide default empty string if undefined
 
         console.log(hostChannel, channelImage)
 
