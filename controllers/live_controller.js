@@ -32,7 +32,7 @@ const createLivestream = async (req, res) => {
             StreamId: 'rtc01',
             Sequence: timeStampInMilliseconds.toString(),
             Type: 'pull',
-            AppId: '486156498',
+            AppId: '2105476770',
             SignatureNonce: signatureNonce,
             Signature: signature,
             SignatureVersion: '2.0',
