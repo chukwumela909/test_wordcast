@@ -1,4 +1,5 @@
 const Livestream = require('../models/livestream');
+const Comment = require('../models/comment');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const crypto = require('crypto');
@@ -107,9 +108,148 @@ const updateLivestream = async (req, res) => {
     }
 };
 
+// Comment Functions
+const addComment = async (req, res) => {
+    try {
+        const { liveId, userId, message } = req.body;
+        
+        // Validate required fields
+        if (!liveId || !userId || !message) {
+            return res.status(400).json({ message: 'liveId, userId, and message are required' });
+        }
+
+        // Check if livestream exists and is active
+        const livestream = await Livestream.findOne({ liveId, isActive: true });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Active livestream not found' });
+        }
+
+        // Get user information
+        const user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Create comment
+        const commentId = uuidv4();
+        const comment = new Comment({
+            commentId,
+            liveId,
+            userId,
+            username: user.channelName,
+            channelImage: user.channelImage || '',
+            message: message.trim(),
+            timestamp: new Date()
+        });
+
+        await comment.save();
+        res.status(201).json({ message: 'Comment added successfully', comment });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ message: 'Error adding comment', error: error.message });
+    }
+};
+
+const getComments = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        const { page = 1, limit = 50 } = req.query;
+
+        // Check if livestream exists
+        const livestream = await Livestream.findOne({ liveId });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Livestream not found' });
+        }
+
+        // Get comments with pagination
+        const comments = await Comment.find({ 
+            liveId, 
+            isDeleted: false 
+        })
+        .sort({ timestamp: -1 }) // Most recent first
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+
+        const totalComments = await Comment.countDocuments({ liveId, isDeleted: false });
+
+        res.json({
+            comments,
+            totalComments,
+            currentPage: page,
+            totalPages: Math.ceil(totalComments / limit)
+        });
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        res.status(500).json({ message: 'Error fetching comments', error: error.message });
+    }
+};
+
+const deleteComment = async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const { userId } = req.body; // User requesting deletion
+
+        const comment = await Comment.findOne({ commentId });
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        // Check if user is the comment owner or livestream host
+        const livestream = await Livestream.findOne({ liveId: comment.liveId });
+        const isOwner = comment.userId === userId;
+        const isHost = livestream && livestream.hostId === userId;
+
+        if (!isOwner && !isHost) {
+            return res.status(403).json({ message: 'Unauthorized to delete this comment' });
+        }
+
+        // Soft delete the comment
+        comment.isDeleted = true;
+        await comment.save();
+
+        res.json({ message: 'Comment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).json({ message: 'Error deleting comment', error: error.message });
+    }
+};
+
+const getRecentComments = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        const { since } = req.query; // Timestamp to get comments since
+
+        // Check if livestream exists
+        const livestream = await Livestream.findOne({ liveId });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Livestream not found' });
+        }
+
+        let query = { liveId, isDeleted: false };
+        
+        // If since timestamp provided, get comments after that time
+        if (since) {
+            query.timestamp = { $gt: new Date(since) };
+        }
+
+        const comments = await Comment.find(query)
+            .sort({ timestamp: 1 }) // Oldest first for real-time updates
+            .limit(100); // Limit for performance
+
+        res.json({ comments });
+    } catch (error) {
+        console.error('Error fetching recent comments:', error);
+        res.status(500).json({ message: 'Error fetching recent comments', error: error.message });
+    }
+};
+
 module.exports = {
     createLivestream,
     fetchLivestreams,
     getLivestreams,
     updateLivestream,
+    addComment,
+    getComments,
+    deleteComment,
+    getRecentComments,
 };

@@ -7,6 +7,7 @@ const livestreamSchema = new Schema({
     channelImage: { type: String, default: 'https://res.cloudinary.com/daf6mdwkh/image/upload/v1751326132/tgn_ahitjm.png' },
     viewCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: false },// New field added
+    roomid: { type: String, },
 });
 
 const Livestream = model('Livestream', livestreamSchema);
