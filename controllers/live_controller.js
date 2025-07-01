@@ -51,7 +51,16 @@ const createLivestream = async (req, res) => {
         const livedata = response.data
 
 
-       // Create Livestream
+        // Check if user already has an active livestream
+        const existingLivestream = await Livestream.findOne({ hostId: userId, isActive: true });
+        if (existingLivestream) {
+            return res.status(409).json({ 
+                message: 'You already have an active livestream. Please end your current stream before starting a new one.',
+                existingLiveId: existingLivestream.liveId 
+            });
+        }
+
+        // Create Livestream
         const user = await User.findOne({userId: userId})
         
         if (!user) {
@@ -243,6 +252,64 @@ const getRecentComments = async (req, res) => {
     }
 };
 
+// Get user's current active livestream
+const getUserActiveLivestream = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const activeLivestream = await Livestream.findOne({ hostId: userId, isActive: true });
+        
+        if (!activeLivestream) {
+            return res.status(404).json({ message: 'No active livestream found for this user' });
+        }
+
+        res.json({ livestream: activeLivestream });
+    } catch (error) {
+        console.error('Error fetching user active livestream:', error);
+        res.status(500).json({ message: 'Error fetching user active livestream', error: error.message });
+    }
+};
+
+// End a livestream (set isActive to false)
+const endLivestream = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        const { userId } = req.body; // User requesting to end the stream
+
+        const livestream = await Livestream.findOne({ liveId });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Livestream not found' });
+        }
+
+        // Check if user is the host
+        if (livestream.hostId !== userId) {
+            return res.status(403).json({ message: 'Only the host can end this livestream' });
+        }
+
+        // Check if already ended
+        if (!livestream.isActive) {
+            return res.status(400).json({ message: 'Livestream is already ended' });
+        }
+
+        // End the livestream
+        livestream.isActive = false;
+        await livestream.save();
+
+        res.json({ 
+            message: 'Livestream ended successfully', 
+            livestream: {
+                liveId: livestream.liveId,
+                hostChannel: livestream.hostChannel,
+                isActive: livestream.isActive,
+                finalViewCount: livestream.viewCount
+            }
+        });
+    } catch (error) {
+        console.error('Error ending livestream:', error);
+        res.status(500).json({ message: 'Error ending livestream', error: error.message });
+    }
+};
+
 module.exports = {
     createLivestream,
     fetchLivestreams,
@@ -252,4 +319,6 @@ module.exports = {
     getComments,
     deleteComment,
     getRecentComments,
+    getUserActiveLivestream,
+    endLivestream,
 };
