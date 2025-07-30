@@ -310,6 +310,77 @@ const endLivestream = async (req, res) => {
     }
 };
 
+// Join a livestream (increment view count)
+const joinLivestream = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        const { userId } = req.body; // Optional: track which users joined
+
+        const livestream = await Livestream.findOne({ liveId, isActive: true });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Active livestream not found' });
+        }
+
+        // Initialize viewers array if it doesn't exist
+        if (!livestream.viewers) {
+            livestream.viewers = [];
+        }
+
+        // Check if user hasn't already been counted
+        if (userId && !livestream.viewers.includes(userId)) {
+            livestream.viewers.push(userId);
+            livestream.viewCount = livestream.viewers.length;
+        } else if (!userId) {
+            // For anonymous viewers, just increment
+            livestream.viewCount += 1;
+        }
+
+        await livestream.save();
+
+        res.json({ 
+            message: 'Joined livestream successfully', 
+            currentViewCount: livestream.viewCount,
+            livestream: {
+                liveId: livestream.liveId,
+                hostChannel: livestream.hostChannel,
+                channelImage: livestream.channelImage,
+                viewCount: livestream.viewCount
+            }
+        });
+    } catch (error) {
+        console.error('Error joining livestream:', error);
+        res.status(500).json({ message: 'Error joining livestream', error: error.message });
+    }
+};
+
+// Leave a livestream (decrement view count)
+const leaveLivestream = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        const { userId } = req.body;
+
+        const livestream = await Livestream.findOne({ liveId, isActive: true });
+        if (!livestream) {
+            return res.status(404).json({ message: 'Active livestream not found' });
+        }
+
+        // Remove user from viewers if they're leaving
+        if (userId && livestream.viewers && livestream.viewers.includes(userId)) {
+            livestream.viewers = livestream.viewers.filter(viewer => viewer !== userId);
+            livestream.viewCount = Math.max(0, livestream.viewCount - 1);
+            await livestream.save();
+        }
+
+        res.json({ 
+            message: 'Left livestream successfully', 
+            currentViewCount: livestream.viewCount 
+        });
+    } catch (error) {
+        console.error('Error leaving livestream:', error);
+        res.status(500).json({ message: 'Error leaving livestream', error: error.message });
+    }
+};
+
 module.exports = {
     createLivestream,
     fetchLivestreams,
@@ -321,4 +392,6 @@ module.exports = {
     getRecentComments,
     getUserActiveLivestream,
     endLivestream,
+    joinLivestream,
+    leaveLivestream,
 };

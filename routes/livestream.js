@@ -8,7 +8,9 @@ const {
     deleteComment,
     getRecentComments,
     getUserActiveLivestream,
-    endLivestream
+    endLivestream,
+    joinLivestream,
+    leaveLivestream
 } = require('../controllers/live_controller');
 
 const router = express.Router();
@@ -19,6 +21,8 @@ router.get('/all-streams', getLivestreams);
 router.put('/:liveId', updateLivestream);
 router.get('/user/:userId/active', getUserActiveLivestream); // Get user's current active livestream
 router.post('/:liveId/end', endLivestream); // End a livestream
+router.post('/:liveId/join', joinLivestream); // Join a livestream (increment view count)
+router.post('/:liveId/leave', leaveLivestream); // Leave a livestream (decrement view count)
 
 // Comment routes
 router.post('/comments', addComment); // Add a comment to a livestream
