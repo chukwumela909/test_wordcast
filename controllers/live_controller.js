@@ -175,7 +175,7 @@ const getComments = async (req, res) => {
             liveId, 
             isDeleted: false 
         })
-        .sort({ timestamp: -1 }) // Most recent first
+        .sort({ timestamp: 1 }) // Most recent last
         .limit(limit * 1)
         .skip((page - 1) * limit);
 
