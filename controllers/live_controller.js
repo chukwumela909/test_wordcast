@@ -415,9 +415,9 @@ const fetchLivestreamsByType = async (req, res) => {
         const { streamType } = req.params;
         
         // Validate streamType
-        const validStreamTypes = ['rtmp', 'normal', 'webrtc'];
+        const validStreamTypes = ['rtmp', 'normal'];
         if (!validStreamTypes.includes(streamType)) {
-            return res.status(400).json({ message: 'Invalid stream type. Must be rtmp, normal, or webrtc' });
+            return res.status(400).json({ message: 'Invalid stream type. Must be rtmp or normal' });
         }
 
         const livestreams = await Livestream.find({ 
