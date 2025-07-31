@@ -9,46 +9,55 @@ const createLivestream = async (req, res) => {
     console.log("habibah")
     try {
         const liveId = uuidv4();
-        const { userId } = req.body;
+        const { userId, streamType = 'rtmp' } = req.body; // Add streamType with default 'rtmp'
         
         if (!userId) {
             return res.status(400).json({ message: 'userId is required' });
         }
-        
-        const hostId = userId; // From auth middleware
 
-        const timeStamp = Math.round(Date.now() / 1000);
-        const timeStampInMilliseconds = Date.now();
-        const appId = 1309704904;
-        const serverSecret = '68a531a8e5b1cd9a19624d2f3f075952';
-        const signatureNonce = crypto.randomBytes(8).toString('hex');
-
-        function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
-            const hash = crypto.createHash('md5'); // Use the MD5 hashing algorithm.
-            const str = appId + signatureNonce + serverSecret + timeStamp;
-            hash.update(str);
-            // hash.digest('hex') indicates that the output is in hex format 
-            return hash.digest('hex');
+        // Validate streamType
+        const validStreamTypes = ['rtmp', 'normal', 'webrtc'];
+        if (!validStreamTypes.includes(streamType)) {
+            return res.status(400).json({ message: 'Invalid stream type. Must be rtmp, normal, or webrtc' });
         }
+        
+        const hostId = userId;
+        let livedata = null;
 
-        const signature = GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp);
+        // Only generate RTMP data for RTMP streams
+        if (streamType === 'rtmp') {
+            const timeStamp = Math.round(Date.now() / 1000);
+            const timeStampInMilliseconds = Date.now();
+            const appId = 1309704904;
+            const serverSecret = '68a531a8e5b1cd9a19624d2f3f075952';
+            const signatureNonce = crypto.randomBytes(8).toString('hex');
 
-        const params = {
-            Action: 'RTMPDispatchV2',
-            StreamId: 'rtc01',
-            Sequence: timeStampInMilliseconds.toString(),
-            Type: 'pull',
-            AppId: '1309704904',
-            SignatureNonce: signatureNonce,
-            Signature: signature,
-            SignatureVersion: '2.0',
-            Timestamp: timeStamp.toString()
-        };
+            function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
+                const hash = crypto.createHash('md5'); // Use the MD5 hashing algorithm.
+                const str = appId + signatureNonce + serverSecret + timeStamp;
+                hash.update(str);
+                // hash.digest('hex') indicates that the output is in hex format 
+                return hash.digest('hex');
+            }
 
-        const response = await axios.get('https://rtc-api.zego.im/', { params });
-        console.log('RTMP Dispatch Response:', response.data);
+            const signature = GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp);
 
-        const livedata = response.data
+            const params = {
+                Action: 'RTMPDispatchV2',
+                StreamId: 'rtc01',
+                Sequence: timeStampInMilliseconds.toString(),
+                Type: 'pull',
+                AppId: '1309704904',
+                SignatureNonce: signatureNonce,
+                Signature: signature,
+                SignatureVersion: '2.0',
+                Timestamp: timeStamp.toString()
+            };
+
+            const response = await axios.get('https://rtc-api.zego.im/', { params });
+            console.log('RTMP Dispatch Response:', response.data);
+            livedata = response.data;
+        }
 
 
         // Check if user already has an active livestream
@@ -72,10 +81,29 @@ const createLivestream = async (req, res) => {
 
         console.log(hostChannel, channelImage)
 
-        const livestream = new Livestream({ liveId, hostId, hostChannel: hostChannel, channelImage: channelImage, viewCount: 0, isActive: true });
+        const livestream = new Livestream({ 
+            liveId, 
+            hostId, 
+            hostChannel: hostChannel, 
+            channelImage: channelImage, 
+            viewCount: 0, 
+            isActive: true,
+            streamType: streamType // Add streamType to the database record
+        });
         await livestream.save();
 
-     return   res.status(200).json({ message: 'Livestream created', livedata });
+        const response_data = {
+            message: 'Livestream created',
+            streamType: streamType,
+            liveId: liveId
+        };
+
+        // Only include livedata for RTMP streams
+        if (streamType === 'rtmp' && livedata) {
+            response_data.livedata = livedata;
+        }
+
+        return res.status(200).json(response_data);
     } catch (error) {
         res.status(500).json({ message: 'Error creating livestream', error });
     }
@@ -381,6 +409,70 @@ const leaveLivestream = async (req, res) => {
     }
 };
 
+// Fetch livestreams by specific type
+const fetchLivestreamsByType = async (req, res) => {
+    try {
+        const { streamType } = req.params;
+        
+        // Validate streamType
+        const validStreamTypes = ['rtmp', 'normal', 'webrtc'];
+        if (!validStreamTypes.includes(streamType)) {
+            return res.status(400).json({ message: 'Invalid stream type. Must be rtmp, normal, or webrtc' });
+        }
+
+        const livestreams = await Livestream.find({ 
+            isActive: true, 
+            streamType: streamType 
+        });
+        
+        res.json({
+            streamType: streamType,
+            count: livestreams.length,
+            livestreams: livestreams
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching livestreams by type', error });
+    }
+};
+
+// Fetch all livestreams grouped by type
+const fetchAllLivestreamsGrouped = async (req, res) => {
+    try {
+        const rtmpStreams = await Livestream.find({ 
+            isActive: true, 
+            streamType: 'rtmp' 
+        });
+        
+        const normalStreams = await Livestream.find({ 
+            isActive: true, 
+            streamType: 'normal' 
+        });
+
+        const webrtcStreams = await Livestream.find({ 
+            isActive: true, 
+            streamType: 'webrtc' 
+        });
+
+        res.json({
+            rtmp: {
+                count: rtmpStreams.length,
+                streams: rtmpStreams
+            },
+            normal: {
+                count: normalStreams.length,
+                streams: normalStreams
+            },
+            webrtc: {
+                count: webrtcStreams.length,
+                streams: webrtcStreams
+            },
+            total: rtmpStreams.length + normalStreams.length + webrtcStreams.length
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching grouped livestreams', error });
+    }
+};
+
 module.exports = {
     createLivestream,
     fetchLivestreams,
@@ -394,4 +486,6 @@ module.exports = {
     endLivestream,
     joinLivestream,
     leaveLivestream,
+    fetchLivestreamsByType,
+    fetchAllLivestreamsGrouped,
 };
