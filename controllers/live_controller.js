@@ -28,8 +28,8 @@ const createLivestream = async (req, res) => {
         if (streamType === 'rtmp') {
             const timeStamp = Math.round(Date.now() / 1000);
             const timeStampInMilliseconds = Date.now();
-            const appId = 1309704904;
-            const serverSecret = '68a531a8e5b1cd9a19624d2f3f075952';
+            const appId = 602000137;
+            const serverSecret = '2d4c51c262c9dc502fe773083c95b351';
             const signatureNonce = crypto.randomBytes(8).toString('hex');
 
             function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
@@ -47,7 +47,7 @@ const createLivestream = async (req, res) => {
                 StreamId: 'rtc01',
                 Sequence: timeStampInMilliseconds.toString(),
                 Type: 'pull',
-                AppId: '1309704904',
+                AppId: '602000137',
                 SignatureNonce: signatureNonce,
                 Signature: signature,
                 SignatureVersion: '2.0',
