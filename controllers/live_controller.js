@@ -29,7 +29,7 @@ const createLivestream = async (req, res) => {
             const timeStamp = Math.round(Date.now() / 1000);
             const timeStampInMilliseconds = Date.now();
             const appId = 602000137;
-            const serverSecret = '2d4c51c262c9dc502fe773083c95b351';
+            //const serverSecret = '2d4c51c262c9dc502fe773083c95b351';
             const signatureNonce = crypto.randomBytes(8).toString('hex');
 
             function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
@@ -105,7 +105,7 @@ const createLivestream = async (req, res) => {
 
         return res.status(200).json(response_data);
     } catch (error) {
-        res.status(500).json({ message: 'Error creating livestream', error });
+        res.status(500).json({ message: 'Free plan expired.', error });
     }
 };
 
