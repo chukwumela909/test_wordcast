@@ -6,11 +6,10 @@ const crypto = require('crypto');
 const User = require('../models/user');
 
 const createLivestream = async (req, res) => {
-    console.log("habibah")
     try {
         const liveId = uuidv4();
         const { userId, streamType = 'rtmp' } = req.body; // Add streamType with default 'rtmp'
-        
+
         if (!userId) {
             return res.status(400).json({ message: 'userId is required' });
         }
@@ -20,7 +19,7 @@ const createLivestream = async (req, res) => {
         if (!validStreamTypes.includes(streamType)) {
             return res.status(400).json({ message: 'Invalid stream type. Must be rtmp or normal' });
         }
-        
+
         const hostId = userId;
         let livedata = null;
 
@@ -28,8 +27,8 @@ const createLivestream = async (req, res) => {
         if (streamType === 'rtmp') {
             const timeStamp = Math.round(Date.now() / 1000);
             const timeStampInMilliseconds = Date.now();
-            const appId = 1309704904;
-            const serverSecret = '68a531a8e5b1cd9a19624d2f3f075952';
+            const appId = 1170382194;
+            const serverSecret = '1a76c056ae5b331fdee917c337636c8c';
             const signatureNonce = crypto.randomBytes(8).toString('hex');
 
             function GenerateUASignature(appId, signatureNonce, serverSecret, timeStamp) {
@@ -47,31 +46,33 @@ const createLivestream = async (req, res) => {
                 StreamId: 'rtc01',
                 Sequence: timeStampInMilliseconds.toString(),
                 Type: 'pull',
-                AppId: '1309704904',
+                AppId: '602000137',
                 SignatureNonce: signatureNonce,
                 Signature: signature,
                 SignatureVersion: '2.0',
                 Timestamp: timeStamp.toString()
             };
 
+
             const response = await axios.get('https://rtc-api.zego.im/', { params });
             console.log('RTMP Dispatch Response:', response.data);
             livedata = response.data;
+            
         }
 
 
         // Check if user already has an active livestream
         const existingLivestream = await Livestream.findOne({ hostId: userId, isActive: true });
         if (existingLivestream) {
-            return res.status(409).json({ 
+            return res.status(409).json({
                 message: 'You already have an active livestream. Please end your current stream before starting a new one.',
-                existingLiveId: existingLivestream.liveId 
+                existingLiveId: existingLivestream.liveId
             });
         }
 
         // Create Livestream
-        const user = await User.findOne({userId: userId})
-        
+        const user = await User.findOne({ userId: userId })
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -81,12 +82,12 @@ const createLivestream = async (req, res) => {
 
         console.log(hostChannel, channelImage)
 
-        const livestream = new Livestream({ 
-            liveId, 
-            hostId, 
-            hostChannel: hostChannel, 
-            channelImage: channelImage, 
-            viewCount: 0, 
+        const livestream = new Livestream({
+            liveId,
+            hostId,
+            hostChannel: hostChannel,
+            channelImage: channelImage,
+            viewCount: 0,
             isActive: true,
             streamType: streamType // Add streamType to the database record
         });
@@ -111,7 +112,7 @@ const createLivestream = async (req, res) => {
 
 const fetchLivestreams = async (req, res) => {
     try {
-        const livestreams = await Livestream.find({isActive: true});
+        const livestreams = await Livestream.find({ isActive: true });
         res.json(livestreams);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching livestreams', error });
@@ -125,6 +126,21 @@ const getLivestreams = async (req, res) => {
         res.json(livestreams);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching livestream', error });
+    }
+};
+
+const getLivestreamById = async (req, res) => {
+    try {
+        const { liveId } = req.params;
+        if (!liveId) return res.status(400).json({ message: 'liveId is required' });
+
+        const livestream = await Livestream.findOne({ liveId });
+        if (!livestream) return res.status(404).json({ message: 'Livestream not found' });
+
+        res.json({ livestream });
+    } catch (error) {
+        console.error('Error fetching livestream by id:', error);
+        res.status(500).json({ message: 'Error fetching livestream', error: error.message });
     }
 };
 
@@ -149,7 +165,7 @@ const updateLivestream = async (req, res) => {
 const addComment = async (req, res) => {
     try {
         const { liveId, userId, message } = req.body;
-        
+
         // Validate required fields
         if (!liveId || !userId || !message) {
             return res.status(400).json({ message: 'liveId, userId, and message are required' });
@@ -199,13 +215,13 @@ const getComments = async (req, res) => {
         }
 
         // Get comments with pagination
-        const comments = await Comment.find({ 
-            liveId, 
-            isDeleted: false 
+        const comments = await Comment.find({
+            liveId,
+            isDeleted: false
         })
-        .sort({ timestamp: 1 }) // Most recent last
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
+            .sort({ timestamp: 1 }) // Most recent last
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
 
         const totalComments = await Comment.countDocuments({ liveId, isDeleted: false });
 
@@ -263,7 +279,7 @@ const getRecentComments = async (req, res) => {
         }
 
         let query = { liveId, isDeleted: false };
-        
+
         // If since timestamp provided, get comments after that time
         if (since) {
             query.timestamp = { $gt: new Date(since) };
@@ -286,7 +302,7 @@ const getUserActiveLivestream = async (req, res) => {
         const { userId } = req.params;
 
         const activeLivestream = await Livestream.findOne({ hostId: userId, isActive: true });
-        
+
         if (!activeLivestream) {
             return res.status(404).json({ message: 'No active livestream found for this user' });
         }
@@ -323,8 +339,8 @@ const endLivestream = async (req, res) => {
         livestream.isActive = false;
         await livestream.save();
 
-        res.json({ 
-            message: 'Livestream ended successfully', 
+        res.json({
+            message: 'Livestream ended successfully',
             livestream: {
                 liveId: livestream.liveId,
                 hostChannel: livestream.hostChannel,
@@ -365,8 +381,8 @@ const joinLivestream = async (req, res) => {
 
         await livestream.save();
 
-        res.json({ 
-            message: 'Joined livestream successfully', 
+        res.json({
+            message: 'Joined livestream successfully',
             currentViewCount: livestream.viewCount,
             livestream: {
                 liveId: livestream.liveId,
@@ -399,9 +415,9 @@ const leaveLivestream = async (req, res) => {
             await livestream.save();
         }
 
-        res.json({ 
-            message: 'Left livestream successfully', 
-            currentViewCount: livestream.viewCount 
+        res.json({
+            message: 'Left livestream successfully',
+            currentViewCount: livestream.viewCount
         });
     } catch (error) {
         console.error('Error leaving livestream:', error);
@@ -413,18 +429,18 @@ const leaveLivestream = async (req, res) => {
 const fetchLivestreamsByType = async (req, res) => {
     try {
         const { streamType } = req.params;
-        
+
         // Validate streamType
         const validStreamTypes = ['rtmp', 'normal'];
         if (!validStreamTypes.includes(streamType)) {
             return res.status(400).json({ message: 'Invalid stream type. Must be rtmp or normal' });
         }
 
-        const livestreams = await Livestream.find({ 
-            isActive: true, 
-            streamType: streamType 
+        const livestreams = await Livestream.find({
+            isActive: true,
+            streamType: streamType
         });
-        
+
         res.json({
             streamType: streamType,
             count: livestreams.length,
@@ -438,19 +454,19 @@ const fetchLivestreamsByType = async (req, res) => {
 // Fetch all livestreams grouped by type
 const fetchAllLivestreamsGrouped = async (req, res) => {
     try {
-        const rtmpStreams = await Livestream.find({ 
-            isActive: true, 
-            streamType: 'rtmp' 
-        });
-        
-        const normalStreams = await Livestream.find({ 
-            isActive: true, 
-            streamType: 'normal' 
+        const rtmpStreams = await Livestream.find({
+            isActive: true,
+            streamType: 'rtmp'
         });
 
-        const webrtcStreams = await Livestream.find({ 
-            isActive: true, 
-            streamType: 'webrtc' 
+        const normalStreams = await Livestream.find({
+            isActive: true,
+            streamType: 'normal'
+        });
+
+        const webrtcStreams = await Livestream.find({
+            isActive: true,
+            streamType: 'webrtc'
         });
 
         res.json({
@@ -473,10 +489,13 @@ const fetchAllLivestreamsGrouped = async (req, res) => {
     }
 };
 
+
+
 module.exports = {
     createLivestream,
     fetchLivestreams,
     getLivestreams,
+    getLivestreamById,
     updateLivestream,
     addComment,
     getComments,

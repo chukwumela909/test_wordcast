@@ -2,6 +2,7 @@ const express = require('express');
 const { 
     createLivestream, 
     getLivestreams, 
+    getLivestreamById,
     updateLivestream,
     addComment,
     getComments,
@@ -20,6 +21,7 @@ const router = express.Router();
 // Livestream routes
 router.post('/create', createLivestream);
 router.get('/all-streams', getLivestreams);
+router.get('/:liveId', getLivestreamById);
 router.get('/type/:streamType', fetchLivestreamsByType); // Get livestreams by specific type
 router.get('/grouped', fetchAllLivestreamsGrouped); // Get all livestreams grouped by type
 router.put('/:liveId', updateLivestream);
