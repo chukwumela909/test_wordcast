@@ -384,6 +384,7 @@ const joinLivestream = async (req, res) => {
         res.json({
             message: 'Joined livestream successfully',
             currentViewCount: livestream.viewCount,
+            viewCount: livestream.viewCount,
             livestream: {
                 liveId: livestream.liveId,
                 hostChannel: livestream.hostChannel,
@@ -417,7 +418,8 @@ const leaveLivestream = async (req, res) => {
 
         res.json({
             message: 'Left livestream successfully',
-            currentViewCount: livestream.viewCount
+            currentViewCount: livestream.viewCount,
+            viewCount: livestream.viewCount
         });
     } catch (error) {
         console.error('Error leaving livestream:', error);
