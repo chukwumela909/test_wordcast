@@ -57,7 +57,7 @@ const createLivestream = async (req, res) => {
             const response = await axios.get('https://rtc-api.zego.im/', { params });
             console.log('RTMP Dispatch Response:', response.data);
             livedata = response.data;
-            
+
         }
 
 
@@ -132,12 +132,14 @@ const getLivestreams = async (req, res) => {
 const getLivestreamById = async (req, res) => {
     try {
         const { liveId } = req.params;
-        if (!liveId) return res.status(400).json({ message: 'liveId is required' });
-
-        const livestream = await Livestream.findOne({ liveId });
-        if (!livestream) return res.status(404).json({ message: 'Livestream not found' });
-
-        res.json({ livestream });
+        const stream = await Livestream.findOne({ liveId });
+        if (!stream) return res.status(404).json({ message: 'Livestream not found' });
+        return res.json({
+            liveId: stream.liveId,
+            streamType: stream.streamType,
+            currentViewCount: stream.currentViewCount ?? stream.currentViewers.length,
+            livestream: stream,
+        });
     } catch (error) {
         console.error('Error fetching livestream by id:', error);
         res.status(500).json({ message: 'Error fetching livestream', error: error.message });
@@ -358,40 +360,24 @@ const endLivestream = async (req, res) => {
 const joinLivestream = async (req, res) => {
     try {
         const { liveId } = req.params;
-        const { userId } = req.body; // Optional: track which users joined
+        const { viewerId } = req.body;
+        const stream = await Livestream.findOne({ liveId });
+        if (!stream) return res.status(404).json({ message: 'Livestream not found' });
 
-        const livestream = await Livestream.findOne({ liveId, isActive: true });
-        if (!livestream) {
-            return res.status(404).json({ message: 'Active livestream not found' });
+        if (!stream.currentViewers.includes(viewerId)) {
+            stream.currentViewers.push(viewerId);
+            stream.currentViewCount = stream.currentViewers.length;
+            stream.markModified('currentViewers');
+            await stream.save();
         }
 
-        // Initialize viewers array if it doesn't exist
-        if (!livestream.viewers) {
-            livestream.viewers = [];
-        }
-
-        // Check if user hasn't already been counted
-        if (userId && !livestream.viewers.includes(userId)) {
-            livestream.viewers.push(userId);
-            livestream.viewCount = livestream.viewers.length;
-        } else if (!userId) {
-            // For anonymous viewers, just increment
-            livestream.viewCount += 1;
-        }
-
-        await livestream.save();
-
-        res.json({
-            message: 'Joined livestream successfully',
-            currentViewCount: livestream.viewCount,
-            viewCount: livestream.viewCount,
-            livestream: {
-                liveId: livestream.liveId,
-                hostChannel: livestream.hostChannel,
-                channelImage: livestream.channelImage,
-                viewCount: livestream.viewCount
-            }
+        return res.json({
+            liveId: stream.liveId,
+            currentViewCount: stream.currentViewCount,
+            streamType: stream.streamType,
         });
+
+
     } catch (error) {
         console.error('Error joining livestream:', error);
         res.status(500).json({ message: 'Error joining livestream', error: error.message });
@@ -402,24 +388,18 @@ const joinLivestream = async (req, res) => {
 const leaveLivestream = async (req, res) => {
     try {
         const { liveId } = req.params;
-        const { userId } = req.body;
+        const { viewerId } = req.body;
+        const stream = await Livestream.findOne({ liveId });
+        if (!stream) return res.status(404).json({ message: 'Livestream not found' });
 
-        const livestream = await Livestream.findOne({ liveId, isActive: true });
-        if (!livestream) {
-            return res.status(404).json({ message: 'Active livestream not found' });
-        }
+        stream.currentViewers = stream.currentViewers.filter((id) => id !== viewerId);
+        stream.currentViewCount = stream.currentViewers.length;
+        stream.markModified('currentViewers');
+        await stream.save();
 
-        // Remove user from viewers if they're leaving
-        if (userId && livestream.viewers && livestream.viewers.includes(userId)) {
-            livestream.viewers = livestream.viewers.filter(viewer => viewer !== userId);
-            livestream.viewCount = Math.max(0, livestream.viewCount - 1);
-            await livestream.save();
-        }
-
-        res.json({
-            message: 'Left livestream successfully',
-            currentViewCount: livestream.viewCount,
-            viewCount: livestream.viewCount
+        return res.json({
+            liveId: stream.liveId,
+            currentViewCount: stream.currentViewCount,
         });
     } catch (error) {
         console.error('Error leaving livestream:', error);

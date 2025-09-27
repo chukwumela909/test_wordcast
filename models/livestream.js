@@ -7,12 +7,15 @@ const livestreamSchema = new Schema({
     channelImage: { type: String, default: 'https://res.cloudinary.com/daf6mdwkh/image/upload/v1751326132/tgn_ahitjm.png' },
     viewCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: false },// New field added
-     streamType: { 
-        type: String, 
-        enum: ['rtmp', 'normal'], 
-        default: 'rtmp' 
+    streamType: {
+        type: String,
+        enum: ['rtmp', 'normal'],
+        default: 'rtmp'
     },
+    currentViewers: { type: [String], default: [] },
+    currentViewCount: { type: Number, default: 0 },
     roomid: { type: String, },
+
 });
 
 const Livestream = model('Livestream', livestreamSchema);
